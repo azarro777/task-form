@@ -41,7 +41,6 @@
   const pass = document.getElementById('password');
 
   function compare(pattern, message, value) {
-    console.log(pattern.value, 'pattetn', value, 'value');
     return pattern.value === value ? true : message;
   }
 
@@ -99,8 +98,8 @@
   };
 
   function validateField(element) {
-    console.log(element);
     var fieldValidation = validations[element.id];
+    console.log(fieldValidation, 'validation');
     var result = { valid: true, element: element, message: '' };
 
     if (fieldValidation) {
@@ -132,6 +131,7 @@
     errorMessageElement && !message && (errorMessageElement.innerHTML = '');
   }
   function formOnchange(e) {
+    console.log(e, 'e');
     if (e.target.dataset && e.target.dataset.validation !== undefined) {
       toggleError(e.target, validateField(e.target).message);
     }
@@ -170,20 +170,35 @@
 
   function nextPrev(n) {
     console.log(n);
-    console.log('validateField');
     var input = document.getElementsByClassName('field');
-    for (var i = 0, length = 6; i < length; i++) {
-      var element = input[i].value;
-      toggleError(element);
-      // console.log(formOnchange(element));
-    }
-    // This function will figure out which tab to display
     var x = document.getElementsByClassName('step');
+    var buttons = document.getElementsByClassName('control');
+    var isValidInputs = [];
+
+    for (var i = 0, length = 6; i < length; i++) {
+      toggleError(input[i], validateField(input[i]).message);
+      isValidInputs.push(validateField(input[i]).valid);
+    }
+    console.log(isValidInputs.includes(false));
+    // This function will figure out which tab to display
+
     // Exit the function if any field in the current tab is invalid:
-    if (n == 1) return false;
+    if (n == 1 && isValidInputs.includes(false)) return false;
     // Hide the current tab:
-    x[currentTab].style.display = 'none';
-    console.log(x[currentTab], 'currentTub');
+
+    console.log(x, 'x');
+    x[n - 1].className = x[n - 1].className.replace('step_active', '');
+    x[n - 1].style.display = 'none';
+    x[n].className += ' step_active';
+    buttons[n - 1].className = buttons[n - 1].className.replace(
+      'control_hide',
+      ''
+    );
+    buttons[n].className += ' control_hide';
+    buttons[n + 1].className = buttons[n + 1].className.replace(
+      'control_hide',
+      ''
+    );
     // Increase or decrease the current tab by 1:
     currentTab = currentTab + n;
     // if you have reached the end of the form... :
