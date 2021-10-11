@@ -98,8 +98,9 @@
   };
 
   function validateField(element) {
+    console.log(element.value);
+    var inputVal = element.value;
     var fieldValidation = validations[element.id];
-    console.log(fieldValidation, 'validation');
     var result = { valid: true, element: element, message: '' };
 
     if (fieldValidation) {
@@ -120,7 +121,6 @@
    * Other function
    * */
   function toggleError(element, message) {
-    console.log(element, message);
     var errorMessageElement =
       element.nextElementSibling &&
       element.nextElementSibling.classList.contains('field-error')
@@ -138,8 +138,8 @@
   }
 
   //? toggle buttons
-  var currentTab = 0; // Current tab is set to be the first tab (0)
-  showTab(currentTab); // Display the current tab
+  // var currentTab = 0; // Current tab is set to be the first tab (0)
+  // showTab(currentTab); // Display the current tab
 
   document.querySelector('.control_next').onclick = function () {
     nextPrev(1);
@@ -148,31 +148,12 @@
     nextPrev(-1);
   };
 
-  function showTab(n) {
-    console.log('showTab', n);
-    // This function will display the specified tab of the form ...
-    var x = document.getElementsByClassName('step');
-    x[n].style.display = 'block';
-    // ... and fix the Previous/Next buttons:
-    if (n == 1) {
-      // document.getElementById('prevBtn').style.display = 'none';
-    } else {
-      // document.getElementById('prevBtn').style.display = 'inline';
-    }
-    if (n == x.length - 1) {
-      // document.getElementById('nextBtn').innerHTML = 'Submit';
-    } else {
-      // document.getElementById('nextBtn').innerHTML = 'Next';
-    }
-    // ... and run a function that displays the correct step indicator:
-    // fixStepIndicator(n);
-  }
-
   function nextPrev(n) {
-    console.log(n);
+    console.log('step', n);
     var input = document.getElementsByClassName('field');
-    var x = document.getElementsByClassName('step');
+    var step = document.getElementsByClassName('step');
     var buttons = document.getElementsByClassName('control');
+
     var isValidInputs = [];
 
     for (var i = 0, length = 6; i < length; i++) {
@@ -181,38 +162,106 @@
     }
     console.log(isValidInputs.includes(false));
     // This function will figure out which tab to display
-
-    // Exit the function if any field in the current tab is invalid:
-    if (n == 1 && isValidInputs.includes(false)) return false;
-    // Hide the current tab:
-
-    console.log(x, 'x');
-    x[n - 1].className = x[n - 1].className.replace('step_active', '');
-    x[n - 1].style.display = 'none';
-    x[n].className += ' step_active';
-    buttons[n - 1].className = buttons[n - 1].className.replace(
-      'control_hide',
-      ''
-    );
-    buttons[n].className += ' control_hide';
-    buttons[n + 1].className = buttons[n + 1].className.replace(
-      'control_hide',
-      ''
-    );
-    // Increase or decrease the current tab by 1:
-    currentTab = currentTab + n;
-    // if you have reached the end of the form... :
-    if (currentTab >= x.length) {
-      //...the form gets submitted:
-      document.getElementById('regForm').submit();
-      return false;
+    if (n === -1) {
+      console.log('step prev', n);
+      step[1].className = step[1].className.replace('step_active', '');
+      step[1].style.display = 'none';
+      step[0].className += ' step_active';
+      step[0].style.display = 'block';
+      buttons[1].className = buttons[1].className.replace('control_hide', '');
+      buttons[0].className += ' control_hide';
+      buttons[2].className += ' control_hide';
     }
-    // Otherwise, display the correct tab:
-    showTab(currentTab);
+    // Exit the function if any field in the current tab is invalid:
+    if (n === 1 && isValidInputs.includes(false)) return false;
+    // Hide the current tab:
+    if (n === 1) {
+      console.log('step next', n);
+      step[0].className = step[0].className.replace('step_active', '');
+      step[0].style.display = 'none';
+      step[1].style.display = 'block';
+      step[1].className += ' step_active';
+      buttons[0].className = buttons[0].className.replace('control_hide', '');
+      buttons[1].className += ' control_hide';
+      buttons[2].className = buttons[2].className.replace('control_hide', '');
+
+      buttons[2].addEventListener('click', function (event) {
+        toggleError(input[6], validateField(input[6]).message);
+        if (!validateField(input[6]).valid) {
+          event.preventDefault();
+        }
+      });
+    }
   }
 
+  var zip = document.getElementById('zip');
   /*
    * Listeners
    * */
+
+  var state = document.getElementById('state');
+  var city = document.getElementById('city')
+
+
+  function callPHP(url, data) {
+    var xml = new XMLHttpRequest();
+    xml.open('POST', url, true);
+    xml.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    // var resp = JSON.parse(xml.responseText);
+    // console.log('RESPONSE', resp);
+    xml.onreadystatechange = function () {
+      if (xml.readyState !== 4 || xml.status !== 200) {
+        return;
+      }
+      xml.responseText;
+      console.log(xml.responseText);
+      var res = JSON.parse(xml.responseText);
+      console.log(res);
+      state.disabled = false;
+      state.value = res.state;
+      city.disabled = false;
+      city.value = res.city;
+
+    }
+    xml.send(data);
+
+  }
+
   document.getElementById('mainForm').addEventListener('change', formOnchange);
+  zip.addEventListener('change', function () {
+    if (validateField(zip).valid) {
+
+      var zipCode = 'zip=' + encodeURIComponent(zip.value);
+      console.log('zipCode', zipCode)
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', 'api/geoStatus.php', true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4 || xhr.status !== 200) {
+          return;
+        }
+        if (xhr.responseText === 'allowed'){
+          callPHP('api/geoData.php', zipCode);
+        } else if (xhr.responseText === 'blocked') {
+          state.disabled = true;
+          state.value = '';
+          city.disabled = true;
+          city.value = '';
+          alert('Zip is blocked!');
+        } else {
+          alert('error');
+        }
+
+        console.log(xhr.responseText);
+      };
+      xhr.send(zipCode);
+    } else {
+      state.disabled = true;
+      state.value = '';
+      city.disabled = true;
+      city.value = '';
+
+    }
+  });
 })();
