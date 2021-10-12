@@ -1,38 +1,5 @@
 (function () {
   /*
-   * Secondary functions
-   * */
-  function ajax(params) {
-    var xhr = new XMLHttpRequest();
-    var url = params.url || '';
-    var body = params.body || '';
-    var success = params.success;
-    var error = params.error;
-
-    xhr.open('POST', url, true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.send(body);
-    xhr.onload = function () {
-      if (
-        xhr.readyState === 4 &&
-        xhr.status === 200 &&
-        typeof success === 'function'
-      ) {
-        return success(xhr.response);
-      } else if (
-        xhr.readyState === 4 &&
-        xhr.status !== 200 &&
-        typeof error === 'function'
-      ) {
-        return error(xhr.response);
-      }
-    };
-    xhr.onerror = error || null;
-  }
-
-  var obj = {url: 'api/geoData.php', body: 'zip= + 11111'}
-  console.log('AJAX', ajax(obj.url, obj.body));
-  /*
    * Validation
    * */
   function checkRegExp(pattern, message, value) {
@@ -41,9 +8,11 @@
 
   //? compare two passwords
   var pass = document.getElementById('password');
+  var errorCompare = document.getElementsByClassName('field-error');
 
   function compare(pattern, message, value) {
     return pattern.value === value ? true : message;
+
   }
 
   var validations = {
@@ -88,7 +57,12 @@
         'Required at least one number (0-9), uppercase and lowercase letters (a-Z) and at least one special character (!@#$%^&*-)'
       )
     ],
-    password2: [compare.bind(null, pass, 'Must be to equal to password')],
+    password2: [checkRegExp.bind(
+        null,
+        /(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[\!\@\#\$\%\^\&\*\-])/,
+        'Required at least one number (0-9), uppercase and lowercase letters (a-Z) and at least one special character (!@#$%^&*-)'
+    ), compare.bind(null, pass, 'Must be to equal to password')],
+
 
     zip: [
       checkRegExp.bind(
@@ -100,6 +74,7 @@
   };
 
   function validateField(element) {
+    console.log(element);
     var fieldValidation = validations[element.id];
     var result = { valid: true, element: element, message: '' };
 
