@@ -18,18 +18,20 @@
         xhr.status === 200 &&
         typeof success === 'function'
       ) {
-        success(xhr.response);
+        return success(xhr.response);
       } else if (
         xhr.readyState === 4 &&
         xhr.status !== 200 &&
         typeof error === 'function'
       ) {
-        error(xhr.response);
+        return error(xhr.response);
       }
     };
     xhr.onerror = error || null;
   }
 
+  var obj = {url: 'api/geoData.php', body: 'zip= + 11111'}
+  console.log('AJAX', ajax(obj.url, obj.body));
   /*
    * Validation
    * */
@@ -38,7 +40,7 @@
   }
 
   //? compare two passwords
-  const pass = document.getElementById('password');
+  var pass = document.getElementById('password');
 
   function compare(pattern, message, value) {
     return pattern.value === value ? true : message;
@@ -98,8 +100,6 @@
   };
 
   function validateField(element) {
-    console.log(element.value);
-    var inputVal = element.value;
     var fieldValidation = validations[element.id];
     var result = { valid: true, element: element, message: '' };
 
@@ -131,15 +131,13 @@
     errorMessageElement && !message && (errorMessageElement.innerHTML = '');
   }
   function formOnchange(e) {
-    console.log(e, 'e');
+
     if (e.target.dataset && e.target.dataset.validation !== undefined) {
       toggleError(e.target, validateField(e.target).message);
     }
   }
 
-  //? toggle buttons
-  // var currentTab = 0; // Current tab is set to be the first tab (0)
-  // showTab(currentTab); // Display the current tab
+  // toggle buttons
 
   document.querySelector('.control_next').onclick = function () {
     nextPrev(1);
@@ -160,7 +158,7 @@
       toggleError(input[i], validateField(input[i]).message);
       isValidInputs.push(validateField(input[i]).valid);
     }
-    console.log(isValidInputs.includes(false));
+    console.log('indexof', isValidInputs.indexOf(false) !== -1);
     // This function will figure out which tab to display
     if (n === -1) {
       console.log('step prev', n);
@@ -173,7 +171,7 @@
       buttons[2].className += ' control_hide';
     }
     // Exit the function if any field in the current tab is invalid:
-    if (n === 1 && isValidInputs.includes(false)) return false;
+    if (n === 1 && isValidInputs.indexOf(false) !== -1) return false;
     // Hide the current tab:
     if (n === 1) {
       console.log('step next', n);
@@ -195,10 +193,6 @@
   }
 
   var zip = document.getElementById('zip');
-  /*
-   * Listeners
-   * */
-
   var state = document.getElementById('state');
   var city = document.getElementById('city')
 
@@ -226,11 +220,15 @@
     xml.send(data);
 
   }
+  /*
+   * Listeners
+   * */
 
   document.getElementById('mainForm').addEventListener('change', formOnchange);
+
   zip.addEventListener('change', function () {
     if (validateField(zip).valid) {
-
+      // valid zip code
       var zipCode = 'zip=' + encodeURIComponent(zip.value);
       console.log('zipCode', zipCode)
 
